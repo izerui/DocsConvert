@@ -77,7 +77,7 @@ def convert_docx_to_markdown(
 
     # 确定 media 目录
     if media_dir is None:
-        media_path = output_path.parent / "media"
+        media_path = output_path.parent
     else:
         media_path = Path(media_dir)
 
@@ -207,7 +207,7 @@ if __name__ == "__main__":
     import sys
 
     # 示例1：单个文件转换
-    docx_file = "files/3-数列的极限测试.docx"
+    docx_file = "files/1901180052张卓群毕业论文.docx"
     output_file = str(Path(docx_file).with_suffix(".md"))
 
     try:
