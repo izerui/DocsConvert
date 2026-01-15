@@ -1,0 +1,12 @@
+.jbeval/
+.venv/
+.pytest_cache/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+.pytest_cache/
+.ipynb_checkpoints/
+.ipynb_checkpoints/
+.ipynb_
+.idea/
