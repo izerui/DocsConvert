@@ -221,7 +221,7 @@ requires-dist = [
     { name = "pymupdf-layout", specifier = ">=1.26.6" },
     { name = "pymupdf4llm", extras = ["layout", "ocr"], specifier = ">=0.2.9" },
     { name = "pypandoc-binary", specifier = ">=1.16.2" },
-    { name = "python-docx", specifier = ">=1.1.0" },
+    { name = "python-docx", specifier = ">=1.2.0" },
 ]
 
 [[package]]
