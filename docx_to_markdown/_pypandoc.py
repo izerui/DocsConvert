@@ -209,68 +209,181 @@ def convert_docx_to_markdown(
         raise RuntimeError(f"转换过程中发生错误: {e}") from e
 
 
-def batch_convert_docx_to_markdown(
-    docx_files: List[str],
-    output_dir: Optional[str] = None,
+def convert_docx_to_html(
+    docx_file: str,
+    output_file: Optional[str] = None,
     extract_media: bool = True,
-    media_dir_name: str = "media",
-    **kwargs
-) -> List[str]:
-    """批量转换多个 DOCX 文件为 Markdown
+    media_dir: Optional[str] = None,
+    math_format: str = "raw_tex",
+    extra_args: Optional[List[str]] = None,
+    standalone: bool = True,
+    embed_css: bool = True,
+    reference_doc: Optional[str] = None,
+    track_changes: bool = False,
+    highlight_code: bool = True,
+    preserve_tabs: bool = True,
+    tab_stop: int = 4
+) -> str:
+    """使用 pypandoc 将 DOCX 转换为 HTML（高保真格式保留）
+
+    HTML 转换相比 Markdown 具有以下优势：
+    - 完整保留字体、颜色、大小等样式信息
+    - 保留表格样式（边框、合并单元格、背景色）
+    - 保留段落对齐、行距、缩进等排版信息
+    - 适合论文格式检查和审核
 
     Args:
-        docx_files: DOCX 文件路径列表
-        output_dir: 输出目录，默认为每个源文件的同一目录
-        extract_media: 是否提取媒体文件
-        media_dir_name: 媒体目录名称（当 output_dir 不为 None 时使用）
-        **kwargs: 传递给 convert_docx_to_markdown 的其他参数
+        docx_file: DOCX 文件路径
+        output_file: 输出 HTML 文件路径，默认为同名 .html 文件
+        extract_media: 是否提取媒体文件（图片等）
+        media_dir: 媒体文件提取目录，默认为输出目录下的 media 子目录
+        math_format: 数学公式格式，可选值：
+            - "raw_tex": 保留原始 LaTeX（推荐，灵活度高）
+            - "mathjax": 使用 MathJax 渲染公式
+            - "katex": 使用 KaTeX 渲染公式
+            - "webtex": 使用 WebTeX 服务渲染公式
+            - "gladtex": 将公式转换为图片
+        extra_args: 传递给 pandoc 的额外命令行参数
+        standalone: 是否输出完整的独立 HTML 文件（包含 <html><head><body>）
+        embed_css: 是否嵌入基础 CSS 样式（推荐）
+        reference_doc: 参考文档路径，用于精确控制输出样式
+        track_changes: 是否保留 Word 文档的修订标记
+        highlight_code: 是否高亮代码块语法
+        preserve_tabs: 是否保留制表符
+        tab_stop: 制表符宽度（空格数）
 
     Returns:
-        成功转换的 Markdown 文件路径列表
+        转换后的 HTML 内容字符串
 
     Raises:
-        Exception: 当所有转换都失败时抛出异常
+        FileNotFoundError: 当输入文件不存在时
+        RuntimeError: 当 pandoc 未安装或转换失败时
+
+    Example:
+        >>> # 基本转换（论文格式检查推荐）
+        >>> html = convert_docx_to_html("thesis.docx", "thesis.html")
+        >>> # 使用 KaTeX 渲染公式
+        >>> html = convert_docx_to_html(
+        ...     "thesis.docx",
+        ...     math_format="katex",
+        ...     highlight_code=True
+        ... )
+        >>> # 指定参考文档
+        >>> html = convert_docx_to_html(
+        ...     "thesis.docx",
+        ...     reference_doc="template.docx"
+        ... )
     """
-    results = []
-    errors = []
+    # 转换为 Path 对象
+    docx_path = Path(docx_file)
 
-    for docx_file in docx_files:
-        try:
-            docx_path = Path(docx_file)
+    # 检查文件是否存在
+    if not docx_path.exists():
+        raise FileNotFoundError(f"Word 文档不存在: {docx_path}")
 
-            # 确定输出文件路径
-            if output_dir:
-                output_path = Path(output_dir) / docx_path.with_suffix(".md").name
-                # 为每个文件创建独立的 media 目录
-                media_dir = Path(output_dir) / media_dir_name / docx_path.stem
-            else:
-                output_path = docx_path.with_suffix(".md")
-                media_dir = None  # 使用默认位置
+    # 确定输出路径
+    if output_file is None:
+        output_path = docx_path.with_suffix(".html")
+    else:
+        output_path = Path(output_file)
 
-            # 执行转换
-            result = convert_docx_to_markdown(
-                docx_file=docx_file,
-                output_file=str(output_path),
-                extract_media=extract_media,
-                media_dir=str(media_dir) if media_dir else None,
-                **kwargs
-            )
+    # 确定 media 目录
+    if media_dir is None:
+        media_path = output_path.parent / docx_path.stem
+    else:
+        media_path = Path(media_dir)
 
-            results.append(str(output_path))
+    # 构建 extra_args 列表
+    args = []
 
-        except Exception as e:
-            errors.append((docx_file, str(e)))
+    # 输入格式：docx
+    args.append("--from=docx")
+    
+    # 输出格式：html + 扩展
+    to_format = "html"
+    
+    # HTML 支持的公式格式：
+    # - "mathjax": 使用 MathJax 渲染（推荐）
+    # - "katex": 使用 KaTeX 渲染
+    # - "webtex": 使用 WebTeX 服务
+    # - "gladtex": 转换为图片
+    # 注意：不需要 "+mathml" 扩展，HTML 原生支持 MathML
+    if math_format and math_format != "mathml":
+        to_format += f"+{math_format}"
+    
+    # 其他有用的 HTML 扩展
+    to_format += "+native_divs+raw_html+raw_tex"
 
-    # 如果有错误，打印警告
-    if errors:
-        print(f"\n警告: {len(errors)} 个文件转换失败:")
-        for file, error in errors:
-            print(f"  - {file}: {error}")
+    # 添加图片提取参数
+    if extract_media:
+        # 确保 media 目录存在
+        media_path.mkdir(parents=True, exist_ok=True)
+        args.append(f"--extract-media={media_path}")
 
-        if not results:
-            raise Exception("所有文件转换失败")
+    # 添加 pandoc 选项
+    if standalone:
+        args.append("--standalone")
+    
+    if embed_css:
+        args.append("--embed-resources")  # 嵌入 CSS 和图片
+        args.append("--css=")  # 使用默认样式
+    
+    if highlight_code:
+        args.append("--syntax-highlighting=tango")  # 语法高亮样式：tango/pygments/kate/monochrome/zenburn/espresso/haddock
 
-    return results
+    if preserve_tabs:
+        args.append("--preserve-tabs")
+        args.append(f"--tab-stop={tab_stop}")
+
+    # 修订标记处理
+    if track_changes:
+        args.append("--track-changes=all")
+    else:
+        args.append("--track-changes=accept")
+
+    # 参考文档
+    if reference_doc:
+        ref_doc_path = Path(reference_doc)
+        if not ref_doc_path.exists():
+            print(f"警告: 参考文档不存在: {reference_doc}")
+        else:
+            args.append(f"--reference-doc={ref_doc_path}")
+
+    # 保留文档结构
+    args.append("--toc")  # 生成目录
+    args.append("--toc-depth=6")
+    args.append("--section-divs")  # 用 <div> 标签包裹章节
+
+    # 添加用户提供的额外参数
+    if extra_args:
+        args.extend(extra_args)
+
+    try:
+        # 执行转换
+        html_content = pypandoc.convert_file(
+            source_file=str(docx_path),
+            to=to_format,
+            format="docx",
+            outputfile=str(output_path) if output_path else None,
+            extra_args=args if args else None,
+        )
+
+        return html_content
+
+    except RuntimeError as e:
+        if "pandoc is not installed" in str(e):
+            raise RuntimeError(
+                "pandoc 未安装。请先安装 pandoc：\n"
+                "  macOS: brew install pandoc\n"
+                "  Ubuntu: sudo apt-get install pandoc\n"
+                "  Windows: 从 https://pandoc.org/installing.html 下载安装"
+            ) from e
+        else:
+            raise RuntimeError(f"DOCX 转 HTML 失败: {e}") from e
+    except Exception as e:
+        raise RuntimeError(f"转换过程中发生错误: {e}") from e
+
+
 
 
 # --- 使用示例 ---
@@ -306,14 +419,25 @@ if __name__ == "__main__":
         print(f"  Markdown 长度: {len(result)} 字符")
         print(f"  格式保留: 表格、公式、列表、脚注、代码块等")
 
-        # 示例2：批量转换（取消注释以测试）
-        # docx_files = ["file1.docx", "file2.docx"]
-        # results = batch_convert_docx_to_markdown(
-        #     docx_files,
-        #     output_dir="markdown_output",
-        #     extract_media=True
-        # )
-        # print(f"批量转换完成，共 {len(results)} 个文件")
+        # 示例1.2：转换为 HTML（高保真格式，推荐论文格式检查）
+        output_html = str(Path(docx_file).with_suffix(".html"))
+        html_result = convert_docx_to_html(
+            docx_file=docx_file,
+            output_file=output_html,
+            extract_media=True,
+            math_format="raw_tex",  # 保留原始 LaTeX（灵活）
+            embed_css=True,  # 嵌入样式
+            highlight_code=True,  # 代码高亮
+            preserve_tabs=True
+        )
+
+        print(f"\n✓ HTML 转换成功!")
+        print(f"  输出文件: {output_html}")
+        print(f"  HTML 长度: {len(html_result)} 字符")
+        print(f"  格式保留: 字体、颜色、大小、表格样式、对齐、行距等")
+        print(f"  适用于: 论文格式检查和审核")
+
+
 
     except FileNotFoundError as e:
         print(f"错误: {e}")
