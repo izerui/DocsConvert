@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import override, Optional, Dict, Any, List
 
-from core.converters.base import BaseConverter
+from base import BaseConverter
 
 # mammoth 需要先安装：pip install mammoth
 try:
