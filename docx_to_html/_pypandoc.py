@@ -6,6 +6,7 @@ import pypandoc
 def convert_docx_to_html(
     docx_file: str,
     output_file: Optional[str] = None,
+    cworkdir: Optional[str] = None,
     extract_media: bool = True,
     media_dir: Optional[str] = None,
     math_format: str = "raw_tex",
@@ -16,7 +17,7 @@ def convert_docx_to_html(
     track_changes: bool = False,
     highlight_code: bool = True,
     preserve_tabs: bool = True,
-    tab_stop: int = 4
+    tab_stop: int = 4,
 ) -> str:
     """使用 pypandoc 将 DOCX 转换为 HTML（高保真格式保留）
 
@@ -70,10 +71,6 @@ def convert_docx_to_html(
     """
     # 转换为 Path 对象
     docx_path = Path(docx_file)
-
-    # 检查文件是否存在
-    if not docx_path.exists():
-        raise FileNotFoundError(f"Word 文档不存在: {docx_path}")
 
     # 确定输出路径
     if output_file is None:
@@ -160,6 +157,7 @@ def convert_docx_to_html(
             format="docx",
             outputfile=str(output_path) if output_path else None,
             extra_args=args if args else None,
+            cworkdir= cworkdir if cworkdir else None
         )
 
         return html_content
@@ -193,11 +191,12 @@ if __name__ == "__main__":
         html_result = convert_docx_to_html(
             docx_file=docx_file,
             output_file=output_html,
+            cworkdir = "/Users/liuyuhua/PycharmProjects/DocsConvert/docx_to_html/files",
             extract_media=True,
             math_format="raw_tex",  # 保留原始 LaTeX（灵活）
             embed_css=True,  # 嵌入样式
             highlight_code=True,  # 代码高亮
-            preserve_tabs=True
+            preserve_tabs=True,
         )
 
         print(f"✓ HTML 转换成功!")
