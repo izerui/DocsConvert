@@ -8,5 +8,9 @@ dependencies = [
     "lxml>=6.0.2",
     "mammoth>=1.11.0",
     "pdfplumber>=0.11.9",
-    "pymupdf>=1.26.7",
+    "pymupdf==1.26.6",
+    "pymupdf4llm[layout,ocr]>=0.2.9",
+    "opencv-python>=4.12.0.88",
+    "pymupdf-layout>=1.26.6",
+    "pypandoc-binary>=1.16.2",
 ]
