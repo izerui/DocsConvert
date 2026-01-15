@@ -1,5 +1,7 @@
 from pathlib import Path
 from typing import override, Optional, Dict, Any, List
+import time
+import random
 
 from base import BaseConverter
 
@@ -26,14 +28,12 @@ class DOCX2HTML(BaseConverter):
     mammoth 将 DOCX 转换为 HTML
     """
 
-    def __init__(self, debug=False, format_html=True):
+    def __init__(self, format_html=True):
         """初始化转换器
 
         Args:
-            debug: 是否开启调试模式
             format_html: 是否格式化 HTML 输出
         """
-        self.debug = debug
         self.format_html = format_html
 
         # 默认 mammoth 配置
@@ -46,8 +46,6 @@ class DOCX2HTML(BaseConverter):
         # 存储 mammoth 的转换消息
         self.messages: List[Dict[str, str]] = []
 
-        # 图片计数器
-        self._image_counter = 0
         # 当前输出路径（用于确定图片保存目录）
         self._current_output_path = None
         # 是否保存图片
@@ -85,9 +83,10 @@ class DOCX2HTML(BaseConverter):
                 if ext == 'jpeg':
                     ext = 'jpg'  # 修正常见类型
                 
-                # 使用计数器生成文件名
-                self._image_counter += 1
-                filename = f"image_{self._image_counter}.{ext}"
+                # 使用时间戳 + 随机数生成唯一文件名，避免重复
+                timestamp = int(time.time() * 1000)
+                random_num = random.randint(1000, 9999)
+                filename = f"image_{timestamp}_{random_num}.{ext}"
                 
                 # 创建 images 目录（相对于输出目录）
                 images_dir = self._current_output_path.parent / "images"
@@ -188,8 +187,6 @@ class DOCX2HTML(BaseConverter):
             return formatted
         except Exception as e:
             # 如果格式化失败，返回原始 HTML
-            if self.debug:
-                print(f"HTML 格式化失败: {e}")
             return html_content
 
 
@@ -222,8 +219,6 @@ class DOCX2HTML(BaseConverter):
         # 保存当前输出路径，用于图片保存
         self._current_output_path = output_path
 
-        # 重置图片计数器
-        self._image_counter = 0
         # 启用图片保存
         self._save_images = True
 
@@ -249,7 +244,7 @@ if __name__ == "__main__":
 
     try:
         # 方式1：创建转换器并转换（默认输出到同名 .html 文件）
-        converter = DOCX2HTML(debug=False)
+        converter = DOCX2HTML()
         result = converter.convert(docx_file, output_file)
         print(f"\n转换结果长度: {len(result)} 字符")
 
