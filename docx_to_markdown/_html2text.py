@@ -6,7 +6,7 @@ from base import BaseConverter
 from docx_to_html._mammoth import DOCX2HTML
 
 
-class DOCX2Markdown(BaseConverter):
+class DOCX2HTML2Markdown(BaseConverter):
     """DOCX 转 Markdown 工具类
     基于 DOCX2HTML 和 html2text 实现
     DOCX2HTML 将 DOCX 转换为 HTML，html2text 将 HTML 转换为 Markdown
@@ -152,7 +152,7 @@ if __name__ == "__main__":
 
     try:
         # 方式1：创建转换器并转换（默认输出到同名 .md 文件）
-        converter = DOCX2Markdown()
+        converter = DOCX2HTML2Markdown()
         result = converter.convert(docx_file, output_file)
         print(f"\n转换结果长度: {len(result)} 字符")
 
