@@ -6,6 +6,7 @@ import pypandoc
 def convert_docx_to_markdown(
     docx_file: str,
     output_file: Optional[str] = None,
+    cworkdir: Optional[str] = None,
     extract_media: bool = True,
     media_dir: Optional[str] = None,
     math_format: str = "tex_math_dollars",
@@ -42,6 +43,7 @@ def convert_docx_to_markdown(
             - "tex_math_double_backslash": 使用 \\\\...\\\\ 行内公式，\\\\[...\\\\] 块级公式
             - "raw_tex": 保持原始 TeX 格式
             - "mathjax": 使用 MathJax 兼容格式
+        cworkdir: pandoc 工作目录，用于指定相对路径的基准目录
         extra_args: 传递给 pandoc 的额外命令行参数
         pandoc_path: 自定义 pandoc 可执行文件路径
         filters: pandoc 过滤器列表
@@ -86,16 +88,6 @@ def convert_docx_to_markdown(
     """
     # 转换为 Path 对象
     docx_path = Path(docx_file)
-
-    # 检查文件是否存在
-    if not docx_path.exists():
-        raise FileNotFoundError(f"Word 文档不存在: {docx_path}")
-
-    # 确定输出路径
-    if output_file is None:
-        output_path = docx_path.with_suffix(".md")
-    else:
-        output_path = Path(output_file)
 
     # 确定 media 目录
     if media_dir is None:
@@ -145,7 +137,7 @@ def convert_docx_to_markdown(
     if extract_media:
         # 确保 media 目录存在
         media_path.mkdir(parents=True, exist_ok=True)
-        args.append(f"--extract-media={media_path}")
+        args.append(f"--extract-media=images/{media_path}")
 
     # 添加其他 pandoc 选项
     if wrap_none:
@@ -191,6 +183,7 @@ def convert_docx_to_markdown(
             outputfile=str(output_path) if output_path else None,
             extra_args=args if args else None,
             filters=filters,
+            cworkdir=cworkdir if cworkdir else None
         )
 
         return markdown_content
@@ -220,9 +213,9 @@ if __name__ == "__main__":
     import sys
 
     # 示例1：单个文件转换（论文格式保留模式）
-    docx_file = "files/1901180052张卓群毕业论文.docx"
+    docx_file = "1901180052张卓群毕业论文.docx"
     output_file = str(Path(docx_file).with_suffix(".md"))
-
+    cworkdir = "/Users/liuyuhua/PycharmProjects/DocsConvert/docx_to_markdown/files"
     try:
         print("开始转换 DOCX 到 Markdown...")
 
@@ -230,6 +223,7 @@ if __name__ == "__main__":
         result = convert_docx_to_markdown(
             docx_file=docx_file,
             output_file=output_file,
+            cworkdir=cworkdir,
             extract_media=True,
             math_format="tex_math_dollars",
             preserve_formatting=True,  # 保留所有格式（表格、脚注、定义列表等）

@@ -208,14 +208,14 @@ if __name__ == "__main__":
     # 示例：单个文件转换（论文格式检查推荐）
     docx_file = "1901180052张卓群毕业论文.docx"
     output_html = str(Path(docx_file).with_suffix(".html"))
-
+    cworkdir = "/Users/liuyuhua/PycharmProjects/DocsConvert/docx_to_html/files"
     try:
         print("开始转换 DOCX 到 HTML...")
 
         html_result = convert_docx_to_html(
             docx_file=docx_file,
             output_file=output_html,
-            cworkdir="/Users/liuyuhua/PycharmProjects/DocsConvert/docx_to_html/files",
+            cworkdir=cworkdir,
             extract_media=True,
             math_format="raw_tex",  # 保留原始 LaTeX（灵活）
             embed_css=False,  # 不嵌入样式
