@@ -176,7 +176,7 @@ if __name__ == "__main__":
 
     try:
         # 直接调用 convert 函数
-        result = convert_docx_to_html(docx_file)
+        result = convert_docx_to_html(docx_file, output_file)
         print(f"\n转换结果长度: {len(result)} 字符")
 
     except FileNotFoundError as e:
