@@ -104,7 +104,6 @@ def convert_docx_to_markdown(
     # 添加图片提取参数
     if extract_media:
         # 确保 media 目录存在
-        media_path.mkdir(parents=True, exist_ok=True)
         args.append(f"--extract-media=images/{media_path}")
 
     # 接受所有修订（不保留 Word 修订标记）
