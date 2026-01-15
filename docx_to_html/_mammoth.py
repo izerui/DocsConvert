@@ -18,7 +18,7 @@ def _format_html(html_content: str) -> str:
     try:
         # 使用 lxml.html 解析并格式化
         tree = lxml_html.fromstring(html_content)
-        
+
         # 格式化输出
         formatted = lxml_html.tostring(
             tree,
@@ -26,11 +26,11 @@ def _format_html(html_content: str) -> str:
             pretty_print=True,
             method='html'
         )
-        
+
         # 添加 DOCTYPE
         if not formatted.startswith('<!DOCTYPE'):
             formatted = '<!DOCTYPE html>\n' + formatted
-        
+
         return formatted
     except Exception:
         # 如果格式化失败，返回原始 HTML
@@ -38,26 +38,24 @@ def _format_html(html_content: str) -> str:
 
 
 def convert_docx_to_html(
-    docx_file: str,
-    output_file: str,
-    format_html: bool = True,
-    save_images: bool = True,
-    ignore_empty_paragraphs: bool = False,
-    external_file_access: bool = True,
-    style_map: Optional[str] = None,
-    delete_html: bool = False
+        docx_file: str,
+        output_file: str = None,
+        format_html: bool = True,
+        save_images: bool = True,
+        ignore_empty_paragraphs: bool = False,
+        external_file_access: bool = True,
+        style_map: Optional[str] = None
 ) -> str:
     """执行 DOCX 到 HTML 的转换
 
     Args:
         docx_file: DOCX 文件路径
-        output_file: 输出 HTML 文件路径（必填）
+        output_file: 输出 HTML 文件路径，默认为同名 .html 文件
         format_html: 是否格式化 HTML 输出
         save_images: 是否保存图片
         ignore_empty_paragraphs: 是否忽略空段落
         external_file_access: 是否允许外部文件访问
         style_map: mammoth 自定义样式映射字符串
-        delete_html: 是否在返回后删除生成的 HTML 文件（仅删除 HTML 文件，保留 images 目录）
 
     Returns:
         转换后的 HTML 内容
@@ -70,35 +68,35 @@ def convert_docx_to_html(
         raise FileNotFoundError(f"Word 文档不存在: {docx_path}")
 
     # 确定输出路径
-    output_path = Path(output_file)
+    output_path = Path(output_file) if output_file is not None else None
 
-    # 定义图片处理函数（闭包，可以访问 output_path）
+    # 定义图片处理函数
     def convert_image(image):
         """处理图片并保存到 images 目录"""
         try:
             # 使用 image.open() 获取文件对象
             with image.open() as image_file:
                 content_type = image.content_type  # 获取 MIME 类型 (e.g., image/png)
-                
+
                 # 根据 content_type 获取扩展名
                 ext = content_type.split('/')[-1]
                 if ext == 'jpeg':
                     ext = 'jpg'  # 修正常见类型
-                
+
                 # 使用时间戳 + 随机数生成唯一文件名，避免重复
                 timestamp = int(time.time() * 1000)
                 random_num = random.randint(1000, 9999)
                 filename = f"image_{timestamp}_{random_num}.{ext}"
-                
-                # 创建 images 目录（相对于输出目录）
-                images_dir = output_path.parent / "images"
+
+                # 创建 images 目录（相对于输出目录 否则就是 docx源文件目录）
+                images_dir = (output_path.parent if output_path else docx_path.parent) / "images"
                 images_dir.mkdir(parents=True, exist_ok=True)
-                
+
                 # 保存图片文件
                 image_path = images_dir / filename
                 with open(image_path, 'wb') as f:
                     f.write(image_file.read())
-            
+
             # 返回相对路径，用于生成 HTML img 标签
             return {
                 "src": f"images/{filename}"
@@ -155,18 +153,12 @@ def convert_docx_to_html(
             if format_html:
                 html_content = _format_html(html_content)
 
-            # 自动创建父目录
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-            # 写入文件
-            output_path.write_text(html_content, encoding='utf-8')
-
-            # 如果需要删除 HTML 文件
-            if delete_html:
-                import os
-                try:
-                    os.unlink(str(output_path))
-                except Exception:
-                    pass
+            # 只有指定了输出文件时才写入
+            if output_path is not None:
+                # 自动创建父目录
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                # 写入文件
+                output_path.write_text(html_content, encoding='utf-8')
 
             return html_content
     except Exception as e:
@@ -184,7 +176,7 @@ if __name__ == "__main__":
 
     try:
         # 直接调用 convert 函数
-        result = convert_docx_to_html(docx_file, output_file)
+        result = convert_docx_to_html(docx_file)
         print(f"\n转换结果长度: {len(result)} 字符")
 
     except FileNotFoundError as e:
@@ -193,5 +185,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"转换失败: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
