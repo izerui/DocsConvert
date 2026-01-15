@@ -2,24 +2,10 @@ from pathlib import Path
 from typing import override, Optional, Dict, Any, List
 import time
 import random
+import mammoth
+from lxml import html as lxml_html
 
 from base import BaseConverter
-
-# mammoth 需要先安装：pip install mammoth
-try:
-    import mammoth
-    MAMMOTH_AVAILABLE = True
-except ImportError:
-    MAMMOTH_AVAILABLE = False
-    print("警告: mammoth 未安装。请运行: pip install mammoth")
-
-try:
-    from lxml import html as lxml_html
-    LXML_AVAILABLE = True
-except ImportError:
-    LXML_AVAILABLE = False
-    print("警告: lxml 未安装，HTML 将不会格式化。请运行: pip install lxml")
-
 
 
 class DOCX2HTML(BaseConverter):
@@ -62,11 +48,6 @@ class DOCX2HTML(BaseConverter):
             是否支持该文件类型
         """
         return suffix.lower() == ".docx"
-
-    def _check_dependencies(self):
-        """检查依赖包是否已安装"""
-        if not MAMMOTH_AVAILABLE:
-            raise ImportError("mammoth 未安装。请运行: pip install mammoth")
 
     def convert_image(self, image):
         """处理图片并保存到 images 目录"""
@@ -151,7 +132,7 @@ class DOCX2HTML(BaseConverter):
 </html>"""
 
                 # 格式化 HTML
-                if self.format_html and LXML_AVAILABLE:
+                if self.format_html:
                     html_content = self._format_html(html_content)
 
 
@@ -189,6 +170,14 @@ class DOCX2HTML(BaseConverter):
             # 如果格式化失败，返回原始 HTML
             return html_content
 
+    def set_style_map(self, style_map: str):
+        """设置 mammoth 自定义样式映射
+
+        Args:
+            style_map: 样式映射字符串
+        """
+        self.mammoth_options["style_map"] = style_map
+
 
     def convert(self, docx_file: str, output_file: str = None) -> str:
         """执行 DOCX 到 HTML 的转换
@@ -200,8 +189,6 @@ class DOCX2HTML(BaseConverter):
         Returns:
             转换后的 HTML 内容
         """
-        # 检查依赖
-        self._check_dependencies()
 
         # 转换为 Path 对象
         docx_path = Path(docx_file)
