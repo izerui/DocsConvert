@@ -77,7 +77,7 @@ def convert_docx_to_markdown(
 
     # 确定 media 目录
     if media_dir is None:
-        media_path = output_path.parent
+        media_path = output_path.parent / docx_path.stem
     else:
         media_path = Path(media_dir)
 
