@@ -151,7 +151,7 @@ if __name__ == "__main__":
     import sys
 
     # 示例1：单个文件转换（论文格式保留模式）
-    docx_file = "1901180052张卓群毕业论文.docx"
+    docx_file = "2023070101ZB203.docx"
     output_file = str(Path(docx_file).with_suffix(".md"))
     cworkdir = "/Users/liuyuhua/PycharmProjects/DocsConvert/docx_to_markdown/files"
     try:

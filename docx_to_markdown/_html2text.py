@@ -163,7 +163,7 @@ if __name__ == "__main__":
     import sys
 
     # 替换为你的 DOCX 文件路径
-    docx_file = "files/1901180052张卓群毕业论文.docx"
+    docx_file = "files/2023070101ZB203.docx"
     output_file = str(Path(docx_file).with_suffix(".md"))
 
     try:
