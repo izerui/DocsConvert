@@ -68,14 +68,17 @@ def convert_docx_to_html(
         raise FileNotFoundError(f"Word 文档不存在: {docx_path}")
 
     # 确定输出路径
-    if output_file is None:
-        output_path = docx_path.with_suffix('.html')
-    else:
-        output_path = Path(output_file)
+    output_path = Path(output_file) if output_file is not None else None
 
     # 定义图片处理函数（闭包，可以访问 output_path）
     def convert_image(image):
         """处理图片并保存到 images 目录"""
+        # 如果 output_path 为 None，不保存图片，返回占位符
+        if output_path is None:
+            return {
+                "src": ""  # 返回空 src，mammoth 可能会忽略或生成空 src
+            }
+        
         try:
             # 使用 image.open() 获取文件对象
             with image.open() as image_file:
@@ -156,10 +159,12 @@ def convert_docx_to_html(
             if format_html:
                 html_content = _format_html(html_content)
 
-            # 自动创建父目录
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-            # 写入文件
-            output_path.write_text(html_content, encoding='utf-8')
+            # 只有指定了输出文件时才写入
+            if output_path is not None:
+                # 自动创建父目录
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                # 写入文件
+                output_path.write_text(html_content, encoding='utf-8')
 
             return html_content
     except Exception as e:
