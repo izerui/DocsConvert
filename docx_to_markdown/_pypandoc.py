@@ -14,13 +14,22 @@ def convert_docx_to_markdown(
     filters: Optional[List[str]] = None,
     wrap_none: bool = False,
     smart: bool = True,
-    standalone: bool = False
+    standalone: bool = False,
+    preserve_formatting: bool = True,
+    track_changes: bool = False,
+    tab_stop: int = 4,
+    reference_doc: Optional[str] = None,
+    include_toc: bool = True,
+    include_sections: bool = True
 ) -> str:
     """使用 pypandoc 将 DOCX 直接转换为 Markdown
 
     支持以下功能：
     - 公式提取：自动将 Word 中的公式转换为 LaTeX 格式
     - 图片提取：自动提取图片并保存到指定目录
+    - 格式保留：保留表格、脚注、定义列表、代码块等格式
+    - 文档结构：保留标题层级、段落缩进、制表符等
+    - 修订标记：可选择性保留 Word 的修订标记
 
     Args:
         docx_file: DOCX 文件路径
@@ -28,7 +37,7 @@ def convert_docx_to_markdown(
         extract_media: 是否提取媒体文件（图片等）
         media_dir: 媒体文件提取目录，默认为输出目录下的 media 子目录
         math_format: 公式格式选项，可选值：
-            - "tex_math_dollars": 使用 $...$ 行内公式，$$...$$ 块级公式
+            - "tex_math_dollars": 使用 $...$ 行内公式，$$...$$ 块级公式（默认）
             - "tex_math_single_backslash": 使用 \\(...\\) 行内公式，\\[...\\] 块级公式
             - "tex_math_double_backslash": 使用 \\\\...\\\\ 行内公式，\\\\[...\\\\] 块级公式
             - "raw_tex": 保持原始 TeX 格式
@@ -36,9 +45,15 @@ def convert_docx_to_markdown(
         extra_args: 传递给 pandoc 的额外命令行参数
         pandoc_path: 自定义 pandoc 可执行文件路径
         filters: pandoc 过滤器列表
-        wrap_none: 是否不自动换行
+        wrap_none: 是否不自动换行（推荐论文使用）
         smart: 是否使用智能标点符号
         standalone: 是否输出完整的独立文档（包含元数据）
+        preserve_formatting: 是否保留所有格式（表格、脚注、定义列表、HTML等），默认为 True
+        track_changes: 是否保留 Word 文档的修订标记（如删除线、新增内容等）
+        tab_stop: 制表符宽度（空格数），默认为 4，用于保留缩进
+        reference_doc: 参考文档路径（如 custom-reference.docx），用于精确控制输出样式（页边距、字体、行距等）
+        include_toc: 是否在转换时提取并保留目录结构
+        include_sections: 是否保留章节标签和文档结构标记
 
     Returns:
         转换后的 Markdown 内容字符串
@@ -60,6 +75,13 @@ def convert_docx_to_markdown(
         >>> md = convert_docx_to_markdown(
         ...     "input.docx",
         ...     media_dir="custom_media_dir"
+        ... )
+        >>> # 论文格式保留模式
+        >>> md = convert_docx_to_markdown(
+        ...     "thesis.docx",
+        ...     wrap_none=True,
+        ...     preserve_formatting=True,
+        ...     tab_stop=4
         ... )
     """
     # 转换为 Path 对象
@@ -87,12 +109,37 @@ def convert_docx_to_markdown(
     # 输入格式：docx
     args.append("--from=docx")
     
-    # 输出格式：markdown + 公式扩展 + 智能标点
+    # 输出格式：markdown + 多种扩展
     to_format = "markdown"
+    
+    # 公式扩展
     if math_format:
         to_format += f"+{math_format}"
+    
+    # 智能标点（将直引号转换为弯引号等）
     if smart:
         to_format += "+smart"
+    
+    # 格式保留扩展（论文重要）
+    if preserve_formatting:
+        # 表格格式
+        to_format += "+pipe_tables+simple_tables+multiline_tables+grid_tables"
+        # 代码块格式
+        to_format += "+fenced_code_blocks+backtick_code_blocks+inline_code_attributes"
+        # 列表格式
+        to_format += "+definition_lists+fenced_code_blocks+task_lists"
+        # 脚注
+        to_format += "+footnotes"
+        # 原始 HTML（保留 Word 的样式标记）
+        to_format += "+raw_html"
+        # 原始 TeX（保留 LaTeX 公式）
+        to_format += "+raw_tex"
+        # 下标上标
+        to_format += "+subscript+superscript"
+        # 删除线
+        to_format += "+strikeout"
+        # 保留行内代码属性
+        to_format += "+bracketed_spans+raw_attribute"
 
     # 添加图片提取参数
     if extract_media:
@@ -105,6 +152,31 @@ def convert_docx_to_markdown(
         args.append("--wrap=none")
     if standalone:
         args.append("--standalone")
+    
+    # 保留制表符和缩进（论文格式重要）
+    args.append("--preserve-tabs")
+    args.append(f"--tab-stop={tab_stop}")
+    
+    # 修订标记处理
+    if track_changes:
+        args.append("--track-changes=all")
+    else:
+        args.append("--track-changes=accept")
+    
+    # 参考文档（用于精确样式控制）
+    if reference_doc:
+        ref_doc_path = Path(reference_doc)
+        if not ref_doc_path.exists():
+            print(f"警告: 参考文档不存在: {reference_doc}")
+        else:
+            args.append(f"--reference-doc={ref_doc_path}")
+    
+    # 目录和文档结构保留
+    if include_toc:
+        args.append("--toc")
+        args.append("--toc-depth=6")  # 保留到6级标题
+    if include_sections:
+        args.append("--section-divs")  # 用 <div> 标签包裹章节，便于后续处理
 
     # 添加用户提供的额外参数
     if extra_args:
@@ -206,24 +278,33 @@ def batch_convert_docx_to_markdown(
 if __name__ == "__main__":
     import sys
 
-    # 示例1：单个文件转换
+    # 示例1：单个文件转换（论文格式保留模式）
     docx_file = "files/1901180052张卓群毕业论文.docx"
     output_file = str(Path(docx_file).with_suffix(".md"))
 
     try:
         print("开始转换 DOCX 到 Markdown...")
 
-        # 基本转换
+        # 论文格式保留转换（推荐）
         result = convert_docx_to_markdown(
             docx_file=docx_file,
             output_file=output_file,
             extract_media=True,
-            math_format="tex_math_dollars"
+            math_format="tex_math_dollars",
+            preserve_formatting=True,  # 保留所有格式（表格、脚注、定义列表等）
+            wrap_none=True,             # 不自动换行，保留原始行结构
+            tab_stop=4,                 # 制表符宽度
+            smart=True,                 # 智能标点
+            track_changes=False,        # 不保留修订标记（已接受的变更）
+            include_toc=True,           # 保留目录结构
+            include_sections=True,      # 保留章节标签
+            reference_doc=None          # 可选：指定参考文档路径以精确控制样式
         )
 
         print(f"✓ 转换成功!")
         print(f"  输出文件: {output_file}")
         print(f"  Markdown 长度: {len(result)} 字符")
+        print(f"  格式保留: 表格、公式、列表、脚注、代码块等")
 
         # 示例2：批量转换（取消注释以测试）
         # docx_files = ["file1.docx", "file2.docx"]
