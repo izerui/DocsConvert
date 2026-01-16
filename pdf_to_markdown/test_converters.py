@@ -22,6 +22,7 @@ from _pymupdf4llm import convert_pdf_to_markdown as convert_with_pymupdf4llm
 from _docling import convert_pdf_to_markdown as convert_with_docling
 from _pdfplumber_pymupdf import convert_pdf_to_markdown as convert_with_pdfplumber
 from _marker import convert_pdf_to_markdown as convert_with_marker
+from _nougat import convert_pdf_to_markdown as convert_with_nougat
 
 
 class ConverterTest:
@@ -117,6 +118,11 @@ class ConverterTest:
                 "kwargs": {
                     "force_ocr": False
                 }
+            },
+            {
+                "name": "nougat",
+                "func": convert_with_nougat,
+                "kwargs": {}
             },
             {
                 "name": "pymupdf4llm_legacy",
