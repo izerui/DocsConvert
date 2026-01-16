@@ -251,7 +251,7 @@ def convert_docx_to_markdown(
 if __name__ == "__main__":
     import sys
     
-    docx_file = "files/2023070101ZB203.docx"
+    docx_file = "files/3-数列的极限测试 2.docx"
     
     if not Path(docx_file).exists():
         print(f"警告: 测试文件 {docx_file} 不存在")

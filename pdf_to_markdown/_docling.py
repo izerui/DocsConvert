@@ -27,11 +27,11 @@ def convert_pdf_to_markdown(
     output_file: Optional[str] = None,
     *,
     ocr_enabled: bool = False,
-    ocr_langs: Optional[list[str]] = None,
+    ocr_langs: Optional[list[str]] = 'zh',
     do_table_structure: bool = True,
     do_code_enrichment: bool = False,
-    do_formula_enrichment: bool = False,
-    generate_picture_images: bool = False,
+    do_formula_enrichment: bool = True,
+    generate_picture_images: bool = True,
     images_scale: float = 2.0,
     debug: bool = False,
 ) -> str:
@@ -42,11 +42,11 @@ def convert_pdf_to_markdown(
         pdf_file: PDF 文件路径（支持本地文件或 URL）
         output_file: 输出 Markdown 文件路径，默认为同名 .md 文件
         ocr_enabled: 是否启用 OCR（光学字符识别），默认 False
-        ocr_langs: OCR 使用的语言列表，例如 ["en", "zh"]。默认为 ["en"]
+        ocr_langs: OCR 使用的语言列表，例如 ["en", "zh"]。默认为 ["zh"]
         do_table_structure: 是否启用表格结构识别，默认 True
         do_code_enrichment: 是否启用代码富集（识别代码块），默认 False
-        do_formula_enrichment: 是否启用公式富集（识别数学公式），默认 False
-        generate_picture_images: 是否生成图片，默认 False
+        do_formula_enrichment: 是否启用公式富集（识别数学公式），默认 True
+        generate_picture_images: 是否生成图片，默认 True
         images_scale: 图片缩放比例，默认 2.0
         debug: 是否开启调试模式，输出详细信息
 
