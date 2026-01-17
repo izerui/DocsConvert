@@ -17,4 +17,7 @@ dependencies = [
     "docling>=2.68.0",
     "markitdown>=0.1.4",
     "opencv-python-headless>=4.12.0.88",
+    "marker-pdf[full]>=1.9.2",
+    "streamlit>=1.53.0",
+    "streamlit-ace>=0.1.1",
 ]
