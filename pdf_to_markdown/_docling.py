@@ -437,41 +437,18 @@ if __name__ == "__main__":
     output_file = "files/20210701012009-王怡入-拉格朗日中值定理在考研数学中的应用-docling.md"
     
     try:
-        # 示例 1: 基本转换（快速，不生成图片）
-        # print("=" * 60)
-        # print("示例 1: 基本转换（优化后的默认配置）")
-        # print("=" * 60)
-        # result1 = convert_pdf_to_markdown(
-        #     pdf_file,
-        #     output_file=output_file,
-        # )
-        # print(f"\n转换结果长度: {len(result1)} 字符")
-        # print(f"\n前 300 字符:\n{result1[:300]}")
-        
-        # 示例 2: 使用类进行批量处理（推荐）
-        # print("\n" + "=" * 60)
-        # print("示例 2: 使用 DoclingConverter 类（模型复用，更快）")
-        # print("=" * 60)
-        # converter = DoclingConverter(
-        #     num_threads=4,
-        #     generate_picture_images=False,  # 不生成图片，加快速度
-        # )
-        # results = converter.convert_multiple(
-        #     file_paths=[pdf_file],
-        #     output_dir="files/",
-        # )
-        # print(f"\n处理统计: 成功 {results['success']}, 失败 {results['failed']}")
-        
         # 示例 3: 启用高级功能（较慢）
+        converter = DoclingConverter(
+            generate_picture_images = True, # 生成图片
+            do_formula_enrichment = True, # 是否启用公式识别
+            images_scale = 2.0
+        )
         print("\n" + "=" * 60)
-        print("示例 3: 启用图片和公式（较慢但质量更高）")
+        print("示例 3: 启用图片（注意：公式识别已禁用以避免依赖冲突）")
         print("=" * 60)
-        result3 = convert_pdf_to_markdown(
-            pdf_file,
+        result3 = converter.convert(
+            pdf_file=pdf_file,
             output_file=output_file,
-            generate_picture_images=True,  # 生成图片
-            do_formula_enrichment=True,  # 启用公式识别
-            images_scale=1.0,  # 1倍缩放
         )
         print(f"\n转换结果长度: {len(result3)} 字符")
         
