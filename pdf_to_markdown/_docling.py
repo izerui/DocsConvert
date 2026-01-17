@@ -20,6 +20,7 @@ from typing import Optional
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.datamodel.base_models import InputFormat
 from docling.datamodel.pipeline_options import PdfPipelineOptions
+from docling_core.types.doc import ImageRefMode
 
 
 def convert_pdf_to_markdown(
@@ -124,20 +125,6 @@ def convert_pdf_to_markdown(
         }
     )
 
-    try:
-        # 执行转换
-        print(f"docling - 正在处理 PDF 文档...")
-        result = converter.convert(pdf_file)
-        
-        # 导出为 Markdown
-        md_text = result.document.export_to_markdown()
-        
-        print(f"docling - 转换完成，共 {len(md_text)} 字符")
-
-    except Exception as e:
-        print(f"docling - 转换失败: {str(e)}")
-        raise
-
     # 确定输出路径
     if output_file is None:
         # 如果是 URL，从 URL 中提取文件名
@@ -156,9 +143,33 @@ def convert_pdf_to_markdown(
     # 自动创建父目录
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # 写入文件
-    print(f"docling - 写入输出文件: {output_path}")
-    output_path.write_text(md_text, encoding='utf-8')
+    try:
+        # 执行转换
+        print(f"docling - 正在处理 PDF 文档...")
+        result = converter.convert(pdf_file)
+        
+        # 保存为 Markdown 文件（包含图片）
+        print(f"docling - 保存 Markdown 文件和图片到: {output_path.parent}")
+        if generate_picture_images:
+            # REFERENCED 模式：图片保存为独立文件，Markdown 中使用相对路径引用
+            result.document.save_as_markdown(
+                output_path,
+                image_mode=ImageRefMode.REFERENCED
+            )
+        else:
+            # 不生成图片时使用普通保存
+            result.document.save_as_markdown(
+                output_path,
+                image_mode=ImageRefMode.PLACEHOLDER
+            )
+        
+        # 读取生成的 Markdown 内容用于返回
+        md_text = output_path.read_text(encoding='utf-8')
+        print(f"docling - 转换完成，共 {len(md_text)} 字符")
+
+    except Exception as e:
+        print(f"docling - 转换失败: {str(e)}")
+        raise
 
     return md_text
 
