@@ -273,7 +273,8 @@ if __name__ == "__main__":
     import sys
     
     pdf_file = "files/20210701012009-王怡入-拉格朗日中值定理在考研数学中的应用.pdf"
-    
+    output_file = "files/20210701012009-王怡入-拉格朗日中值定理在考研数学中的应用-nougat.md"
+
     if not Path(pdf_file).exists():
         print(f"警告: 测试文件 {pdf_file} 不存在")
         print("请将 PDF 文件放在 {pdf_file} 或修改代码中的路径")
@@ -293,11 +294,11 @@ if __name__ == "__main__":
             sys.exit(0)
         
         # 示例 1: 基本转换（包含元数据和 front matter）
-        print("=" * 60)
-        print("示例 1: 基本转换（包含元数据和 front matter）")
-        print("=" * 60)
-        result1 = convert_pdf_to_markdown(pdf_file)
-        print(f"\n转换结果长度: {len(result1)} 字符")
+        # print("=" * 60)
+        # print("示例 1: 基本转换（包含元数据和 front matter）")
+        # print("=" * 60)
+        # result1 = convert_pdf_to_markdown(pdf_file)
+        # print(f"\n转换结果长度: {len(result1)} 字符")
         
         # 示例 2: 使用 small 模型（更快，质量略低）
         print("\n" + "=" * 60)
@@ -305,32 +306,32 @@ if __name__ == "__main__":
         print("=" * 60)
         result2 = convert_pdf_to_markdown(
             pdf_file,
-            output_file="files/output_nougat_small.md",
+            output_file=output_file,
             model="0.1.0-small"
         )
         print(f"\n转换结果长度: {len(result2)} 字符")
         
         # 示例 3: 不添加 front matter
-        print("\n" + "=" * 60)
-        print("示例 3: 不添加 front matter")
-        print("=" * 60)
-        result3 = convert_pdf_to_markdown(
-            pdf_file,
-            output_file="files/output_nougat_plain.md",
-            add_front_matter=False
-        )
-        print(f"\n转换结果长度: {len(result3)} 字符")
+        # print("\n" + "=" * 60)
+        # print("示例 3: 不添加 front matter")
+        # print("=" * 60)
+        # result3 = convert_pdf_to_markdown(
+        #     pdf_file,
+        #     output_file="files/output_nougat_plain.md",
+        #     add_front_matter=False
+        # )
+        # print(f"\n转换结果长度: {len(result3)} 字符")
         
         # 示例 4: 使用重流模式
-        print("\n" + "=" * 60)
-        print("示例 4: 使用重流模式（适合移动端）")
-        print("=" * 60)
-        result4 = convert_pdf_to_markdown(
-            pdf_file,
-            output_file="files/output_nougat_reflow.md",
-            reflow=True
-        )
-        print(f"\n转换结果长度: {len(result4)} 字符")
+        # print("\n" + "=" * 60)
+        # print("示例 4: 使用重流模式（适合移动端）")
+        # print("=" * 60)
+        # result4 = convert_pdf_to_markdown(
+        #     pdf_file,
+        #     output_file="files/output_nougat_reflow.md",
+        #     reflow=True
+        # )
+        # print(f"\n转换结果长度: {len(result4)} 字符")
         
     except FileNotFoundError as e:
         print(f"错误: {e}")

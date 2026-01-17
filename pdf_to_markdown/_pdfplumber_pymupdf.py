@@ -335,11 +335,11 @@ if __name__ == "__main__":
 
     # 替换为你的 PDF 文件路径
     pdf_file = "files/20210701012009-王怡入-拉格朗日中值定理在考研数学中的应用.pdf"
-    output_file = str(Path(pdf_file).with_suffix(".md"))
+    output_file = "files/20210701012009-王怡入-拉格朗日中值定理在考研数学中的应用-pdfplumber_pymupdf.md"
 
     try:
         # 直接调用 convert 函数
-        result = convert_pdf_to_markdown(pdf_file)
+        result = convert_pdf_to_markdown(pdf_file, output_file=output_file)
         print(f"\n转换结果长度: {len(result)} 字符")
 
     except FileNotFoundError as e:

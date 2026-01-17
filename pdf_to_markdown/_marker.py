@@ -250,7 +250,8 @@ if __name__ == "__main__":
     import sys
     
     pdf_file = "files/20210701012009-王怡入-拉格朗日中值定理在考研数学中的应用.pdf"
-    
+    output_file = "files/20210701012009-王怡入-拉格朗日中值定理在考研数学中的应用-marker.md"
+
     if not Path(pdf_file).exists():
         print(f"警告: 测试文件 {pdf_file} 不存在")
         print("请将 PDF 文件放在 {pdf_file} 或修改代码中的路径")
@@ -270,8 +271,8 @@ if __name__ == "__main__":
         print("=" * 60)
         result2 = convert_pdf_to_markdown(
             pdf_file,
-            output_file="files/output_marker.md",
-            image_output_dir="files/custom_images",
+            output_file=output_file,
+            image_output_dir="files/marker_images",
             force_ocr=False
         )
         print(f"\n转换结果长度: {len(result2)} 字符")

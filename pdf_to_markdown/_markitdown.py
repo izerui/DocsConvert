@@ -204,19 +204,19 @@ if __name__ == "__main__":
     
     # 替换为你的 PDF 文件路径
     pdf_file = "files/20210701012009-王怡入-拉格朗日中值定理在考研数学中的应用.pdf"
-    output_file = str(Path(pdf_file).stem + "_markitdown.md")
+    output_file = "files/20210701012009-王怡入-拉格朗日中值定理在考研数学中的应用-markitdown.md"
     
     try:
         # 示例 1: 基本转换（包含元数据和 front matter）
-        print("=" * 60)
-        print("示例 1: 基本转换（包含元数据和 front matter）")
-        print("=" * 60)
-        result1 = convert_pdf_to_markdown(
-            pdf_file,
-            output_file=output_file,
-        )
-        print(f"\n转换结果长度: {len(result1)} 字符")
-        print(f"\n前 500 字符:\n{result1[:500]}")
+        # print("=" * 60)
+        # print("示例 1: 基本转换（包含元数据和 front matter）")
+        # print("=" * 60)
+        # result1 = convert_pdf_to_markdown(
+        #     pdf_file,
+        #     output_file=output_file,
+        # )
+        # print(f"\n转换结果长度: {len(result1)} 字符")
+        # print(f"\n前 500 字符:\n{result1[:500]}")
         
         # 示例 2: 简洁模式（不添加 front matter）
         print("\n" + "=" * 60)
@@ -224,29 +224,29 @@ if __name__ == "__main__":
         print("=" * 60)
         result2 = convert_pdf_to_markdown(
             pdf_file,
-            output_file="files/output_simple.md",
+            output_file=output_file,
             add_front_matter=False,
-            extract_metadata=False
+            extract_metadata=True
         )
         print(f"\n转换结果长度: {len(result2)} 字符")
         print(f"\n前 300 字符:\n{result2[:300]}")
         
-        # 示例 3: 添加自定义元数据
-        print("\n" + "=" * 60)
-        print("示例 3: 添加自定义元数据")
-        print("=" * 60)
-        result3 = convert_pdf_to_markdown(
-            pdf_file,
-            output_file="files/output_custom.md",
-            custom_metadata={
-                "tags": ["mathematics", "calculus", "考试"],
-                "category": "学术论文",
-                "difficulty": "中级",
-                "language": "中文"
-            }
-        )
-        print(f"\n转换结果长度: {len(result3)} 字符")
-        print(f"\n前 600 字符:\n{result3[:600]}")
+        # # 示例 3: 添加自定义元数据
+        # print("\n" + "=" * 60)
+        # print("示例 3: 添加自定义元数据")
+        # print("=" * 60)
+        # result3 = convert_pdf_to_markdown(
+        #     pdf_file,
+        #     output_file="files/output_custom.md",
+        #     custom_metadata={
+        #         "tags": ["mathematics", "calculus", "考试"],
+        #         "category": "学术论文",
+        #         "difficulty": "中级",
+        #         "language": "中文"
+        #     }
+        # )
+        # print(f"\n转换结果长度: {len(result3)} 字符")
+        # print(f"\n前 600 字符:\n{result3[:600]}")
         
     except FileNotFoundError as e:
         print(f"错误: {e}")

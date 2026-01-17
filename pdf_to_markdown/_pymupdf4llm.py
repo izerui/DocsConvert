@@ -228,7 +228,7 @@ if __name__ == "__main__":
     
     # 替换为你的 PDF 文件路径
     pdf_file = "files/20210701012009-王怡入-拉格朗日中值定理在考研数学中的应用.pdf"
-    output_file = str(Path(pdf_file).with_suffix(".md"))
+    output_file = "files/20210701012009-王怡入-拉格朗日中值定理在考研数学中的应用-pymupdf4llm.md"
     
     try:
         # 示例 1: Legacy Mode - 默认转换
