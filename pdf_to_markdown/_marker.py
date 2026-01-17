@@ -258,11 +258,11 @@ if __name__ == "__main__":
     
     try:
         # 示例 1: 基本转换（包含元数据和 front matter，提取图片）
-        print("=" * 60)
-        print("示例 1: 基本转换（包含元数据和 front matter，提取图片）")
-        print("=" * 60)
-        result1 = convert_pdf_to_markdown(pdf_file)
-        print(f"\n转换结果长度: {len(result1)} 字符")
+        # print("=" * 60)
+        # print("示例 1: 基本转换（包含元数据和 front matter，提取图片）")
+        # print("=" * 60)
+        # result1 = convert_pdf_to_markdown(pdf_file)
+        # print(f"\n转换结果长度: {len(result1)} 字符")
         
         # 示例 2: 指定输出文件和自定义图片目录
         print("\n" + "=" * 60)
@@ -276,29 +276,29 @@ if __name__ == "__main__":
         )
         print(f"\n转换结果长度: {len(result2)} 字符")
         
-        # 示例 3: 转换指定页面范围
-        print("\n" + "=" * 60)
-        print("示例 3: 转换指定页面范围（前3页）")
-        print("=" * 60)
-        result3 = convert_pdf_to_markdown(
-            pdf_file,
-            output_file="files/output_marker_pages.md",
-            page_range="0-2",
-            extract_images=True
-        )
-        print(f"\n转换结果长度: {len(result3)} 字符")
-        
-        # 示例 4: 不添加 front matter
-        print("\n" + "=" * 60)
-        print("示例 4: 不添加 front matter")
-        print("=" * 60)
-        result4 = convert_pdf_to_markdown(
-            pdf_file,
-            output_file="files/output_marker_plain.md",
-            add_front_matter=False,
-            extract_images=True
-        )
-        print(f"\n转换结果长度: {len(result4)} 字符")
+        # # 示例 3: 转换指定页面范围
+        # print("\n" + "=" * 60)
+        # print("示例 3: 转换指定页面范围（前3页）")
+        # print("=" * 60)
+        # result3 = convert_pdf_to_markdown(
+        #     pdf_file,
+        #     output_file="files/output_marker_pages.md",
+        #     page_range="0-2",
+        #     extract_images=True
+        # )
+        # print(f"\n转换结果长度: {len(result3)} 字符")
+        #
+        # # 示例 4: 不添加 front matter
+        # print("\n" + "=" * 60)
+        # print("示例 4: 不添加 front matter")
+        # print("=" * 60)
+        # result4 = convert_pdf_to_markdown(
+        #     pdf_file,
+        #     output_file="files/output_marker_plain.md",
+        #     add_front_matter=False,
+        #     extract_images=True
+        # )
+        # print(f"\n转换结果长度: {len(result4)} 字符")
         
     except FileNotFoundError as e:
         print(f"错误: {e}")
