@@ -193,15 +193,15 @@ class DoclingConverter:
     
     def convert(
         self,
-        pdf_file: str,
+        source_file: str,
         output_file: Optional[str] = None,
         debug: bool = False,
     ) -> str:
         """
-        转换单个 PDF 文件
+        转换单个文件
         
         Args:
-            pdf_file: PDF 文件路径（支持本地文件或 URL）
+            source_file: 文件路径（支持本地文件或 URL）
             output_file: 输出 Markdown 文件路径
             debug: 是否开启调试模式
             
@@ -209,25 +209,25 @@ class DoclingConverter:
             转换后的 Markdown 内容
         """
         # 转换为 Path 对象
-        pdf_path = Path(pdf_file)
+        source_path = Path(source_file)
         
         # 检查文件是否存在（仅对本地文件）
-        if not pdf_file.startswith(('http://', 'https://')):
-            if not pdf_path.exists():
-                raise FileNotFoundError(f"PDF 文档不存在: {pdf_file}")
+        if not source_file.startswith(('http://', 'https://')):
+            if not source_path.exists():
+                raise FileNotFoundError(f"文档不存在: {source_file}")
         
         # 确定输出路径
         if output_file is None:
             # 如果是 URL，从 URL 中提取文件名
-            if pdf_file.startswith(('http://', 'https://')):
+            if source_file.startswith(('http://', 'https://')):
                 from urllib.parse import urlparse
-                parsed = urlparse(pdf_file)
+                parsed = urlparse(source_file)
                 filename = Path(parsed.path).name
                 if not filename.endswith('.pdf'):
                     filename += '.pdf'
                 output_path = Path("output") / Path(filename).with_suffix('.md')
             else:
-                output_path = pdf_path.with_suffix('.md')
+                output_path = source_path.with_suffix('.md')
         else:
             output_path = Path(output_file)
         
@@ -235,7 +235,7 @@ class DoclingConverter:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         
         if debug:
-            print(f"docling - 开始转换: {pdf_file}")
+            print(f"docling - 开始转换: {source_file}")
             print(f"docling - OCR: {'启用' if self.ocr_enabled else '禁用'}")
             if self.ocr_enabled:
                 print(f"docling - OCR 语言: {self.ocr_langs}")
@@ -246,8 +246,8 @@ class DoclingConverter:
         
         try:
             # 执行转换
-            print(f"docling - 正在处理 PDF 文档...")
-            result = self.converter.convert(pdf_file)
+            print(f"docling - 正在转换文档...")
+            result = self.converter.convert(source_file)
             
             # 保存为 Markdown 文件
             print(f"docling - 保存 Markdown 文件到: {output_path.parent}")
@@ -285,10 +285,10 @@ class DoclingConverter:
         max_num_pages: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
-        批量转换多个 PDF 文件（复用模型，效率高）
+        批量转换多个文件（复用模型，效率高）
         
         Args:
-            file_paths: PDF 文件路径列表
+            file_paths: 文件路径列表
             output_dir: 输出目录
             continue_on_error: 遇到错误是否继续
             max_num_pages: 每个文档最大页数限制
@@ -421,7 +421,7 @@ def convert_pdf_to_markdown(
     )
     
     return converter.convert(
-        pdf_file=pdf_file,
+        source_file=pdf_file,
         output_file=output_file,
         debug=debug,
     )
@@ -447,7 +447,7 @@ if __name__ == "__main__":
         print("示例 3: 启用图片（注意：公式识别已禁用以避免依赖冲突）")
         print("=" * 60)
         result3 = converter.convert(
-            pdf_file=pdf_file,
+            source_file=pdf_file,
             output_file=output_file,
         )
         print(f"\n转换结果长度: {len(result3)} 字符")
