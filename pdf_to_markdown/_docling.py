@@ -193,6 +193,7 @@ class DoclingConverter:
     
     def convert(
         self,
+        working_dir: str,
         source_file: str,
         output_file: Optional[str] = None,
         debug: bool = False,
@@ -201,50 +202,63 @@ class DoclingConverter:
         转换单个文件
         
         Args:
-            source_file: 文件路径（支持本地文件或 URL）
-            output_file: 输出 Markdown 文件路径
+            working_dir: 工作目录（必填），所有相对路径都基于此目录
+            source_file: 源文件路径（相对于 working_dir 的相对路径，或 URL）
+            output_file: 输出 Markdown 文件路径（相对于 working_dir 的相对路径）
             debug: 是否开启调试模式
             
         Returns:
             转换后的 Markdown 内容
         """
-        # 转换为 Path 对象
-        source_path = Path(source_file)
-        
-        # 检查文件是否存在（仅对本地文件）
-        if not source_file.startswith(('http://', 'https://')):
-            if not source_path.exists():
-                raise FileNotFoundError(f"文档不存在: {source_file}")
-        
-        # 确定输出路径
-        if output_file is None:
-            # 如果是 URL，从 URL 中提取文件名
-            if source_file.startswith(('http://', 'https://')):
-                from urllib.parse import urlparse
-                parsed = urlparse(source_file)
-                filename = Path(parsed.path).name
-                if not filename.endswith('.pdf'):
-                    filename += '.pdf'
-                output_path = Path("output") / Path(filename).with_suffix('.md')
-            else:
-                output_path = source_path.with_suffix('.md')
-        else:
-            output_path = Path(output_file)
-        
-        # 自动创建父目录
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        if debug:
-            print(f"docling - 开始转换: {source_file}")
-            print(f"docling - OCR: {'启用' if self.ocr_enabled else '禁用'}")
-            if self.ocr_enabled:
-                print(f"docling - OCR 语言: {self.ocr_langs}")
-            print(f"docling - 表格结构: {'启用' if self.do_table_structure else '禁用'}")
-            print(f"docling - 代码富集: {'启用' if self.do_code_enrichment else '禁用'}")
-            print(f"docling - 公式富集: {'启用' if self.do_formula_enrichment else '禁用'}")
-            print(f"docling - 生成图片: {'启用' if self.generate_picture_images else '禁用'}")
+        # 保存当前工作目录
+        original_cwd = os.getcwd()
         
         try:
+            # 切换到工作目录
+            os.chdir(working_dir)
+            
+            # 转换为 Path 对象
+            source_path = Path(source_file)
+            
+            # 检查文件是否存在（仅对本地文件）
+            if not source_file.startswith(('http://', 'https://')):
+                if not source_path.exists():
+                    raise FileNotFoundError(f"文档不存在: {source_file}")
+            
+            # 确定输出路径
+            if output_file is None:
+                # 如果是 URL，从 URL 中提取文件名
+                if source_file.startswith(('http://', 'https://')):
+                    from urllib.parse import urlparse
+                    parsed = urlparse(source_file)
+                    filename = Path(parsed.path).name
+                    if not filename.endswith('.pdf'):
+                        filename += '.pdf'
+                    output_path = Path("output") / Path(filename).with_suffix('.md')
+                else:
+                    output_path = source_path.with_suffix('.md')
+            else:
+                output_path = Path(output_file)
+            
+            # 自动创建父目录
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # 确定图片保存目录：images/{output_file的basename}/
+            images_dir = Path("images") / output_path.stem
+            
+            if debug:
+                print(f"docling - 工作目录: {working_dir}")
+                print(f"docling - 开始转换: {source_file}")
+                print(f"docling - OCR: {'启用' if self.ocr_enabled else '禁用'}")
+                if self.ocr_enabled:
+                    print(f"docling - OCR 语言: {self.ocr_langs}")
+                print(f"docling - 表格结构: {'启用' if self.do_table_structure else '禁用'}")
+                print(f"docling - 代码富集: {'启用' if self.do_code_enrichment else '禁用'}")
+                print(f"docling - 公式富集: {'启用' if self.do_formula_enrichment else '禁用'}")
+                print(f"docling - 生成图片: {'启用' if self.generate_picture_images else '禁用'}")
+                print(f"docling - 输出文件: {output_path}")
+                print(f"docling - 图片目录: {images_dir}")
+            
             # 执行转换
             print(f"docling - 正在转换文档...")
             result = self.converter.convert(source_file)
@@ -252,10 +266,14 @@ class DoclingConverter:
             # 保存为 Markdown 文件
             print(f"docling - 保存 Markdown 文件到: {output_path.parent}")
             if self.generate_picture_images:
+                # 创建图片目录
+                # images_dir.mkdir(parents=True, exist_ok=True)
+                
                 # REFERENCED 模式：图片保存为独立文件
                 result.document.save_as_markdown(
                     output_path,
-                    image_mode=ImageRefMode.REFERENCED
+                    image_mode=ImageRefMode.REFERENCED,
+                    artifacts_dir=images_dir
                 )
             else:
                 # PLACEHOLDER 模式：不生成图片
@@ -274,11 +292,15 @@ class DoclingConverter:
         except Exception as e:
             print(f"docling - 转换失败: {str(e)}")
             raise
+        finally:
+            # 恢复原来的工作目录
+            os.chdir(original_cwd)
         
         return md_text
     
     def convert_multiple(
         self,
+        working_dir: str,
         file_paths: List[str],
         output_dir: Optional[str] = None,
         continue_on_error: bool = True,
@@ -288,77 +310,99 @@ class DoclingConverter:
         批量转换多个文件（复用模型，效率高）
         
         Args:
-            file_paths: 文件路径列表
-            output_dir: 输出目录
+            working_dir: 工作目录（必填），所有相对路径都基于此目录
+            file_paths: 文件路径列表（相对于 working_dir 的相对路径）
+            output_dir: 输出目录（相对于 working_dir 的相对路径）
             continue_on_error: 遇到错误是否继续
             max_num_pages: 每个文档最大页数限制
             
         Returns:
             处理结果统计
         """
-        results = {
-            "total": len(file_paths),
-            "success": 0,
-            "failed": 0,
-            "errors": []
-        }
+        # 保存当前工作目录
+        original_cwd = os.getcwd()
         
-        if output_dir:
-            output_path = Path(output_dir)
-            output_path.mkdir(parents=True, exist_ok=True)
-        
-        logger.info(f"开始批量处理 {len(file_paths)} 个文件...")
-        
-        # 使用 convert_all 方法批量处理（模型已加载，直接使用）
-        import sys
-        results_iter = self.converter.convert_all(
-            source=file_paths,
-            raises_on_error=not continue_on_error,
-            max_num_pages=max_num_pages or sys.maxsize,
-        )
-        
-        for result in results_iter:
-            file_name = result.input.file.name
+        try:
+            # 切换到工作目录
+            os.chdir(working_dir)
             
-            if result.status == ConversionStatus.SUCCESS:
-                results["success"] += 1
-                logger.info(f"✓ 已转换: {file_name}")
+            results = {
+                "total": len(file_paths),
+                "success": 0,
+                "failed": 0,
+                "errors": []
+            }
+            
+            if output_dir:
+                output_path = Path(output_dir)
+                output_path.mkdir(parents=True, exist_ok=True)
+            
+            logger.info(f"开始批量处理 {len(file_paths)} 个文件...")
+            
+            # 使用 convert_all 方法批量处理（模型已加载，直接使用）
+            import sys
+            results_iter = self.converter.convert_all(
+                source=file_paths,
+                raises_on_error=not continue_on_error,
+                max_num_pages=max_num_pages or sys.maxsize,
+            )
+            
+            for result in results_iter:
+                file_name = result.input.file.name
                 
-                # 导出为 Markdown
-                doc = result.document
-                
-                # 确定输出路径
-                if output_dir:
-                    out_path = output_path / f"{Path(file_name).stem}.md"
+                if result.status == ConversionStatus.SUCCESS:
+                    results["success"] += 1
+                    logger.info(f"✓ 已转换: {file_name}")
+                        
+                    # 导出为 Markdown
+                    doc = result.document
+                        
+                    # 确定输出路径
+                    if output_dir:
+                        out_path = output_path / f"{Path(file_name).stem}.md"
+                    else:
+                        out_path = Path(file_name).with_suffix('.md')
+                        
+                    # 确定图片保存目录：images/{output_file的basename}/
+                    images_dir = Path("images") / out_path.stem
+                        
+                    # 保存文件
+                    if self.generate_picture_images:
+                        # 创建图片目录
+                        # images_dir.mkdir(parents=True, exist_ok=True)
+                        # REFERENCED 模式：图片保存为独立文件
+                        doc.save_as_markdown(out_path, image_mode=ImageRefMode.REFERENCED, artifacts_dir=images_dir)
+                    else:
+                        doc.save_as_markdown(out_path, image_mode=ImageRefMode.PLACEHOLDER)
+                    
+                    logger.info(f"  已保存: {out_path}")
+                        
+                    # 及时释放资源
+                    del doc
+                    del result
+                        
                 else:
-                    out_path = Path(file_name).with_suffix('.md')
-                
-                # 保存文件
-                if self.generate_picture_images:
-                    doc.save_as_markdown(out_path, image_mode=ImageRefMode.REFERENCED)
-                else:
-                    doc.save_as_markdown(out_path, image_mode=ImageRefMode.PLACEHOLDER)
-                
-                logger.info(f"  已保存: {out_path}")
-                
-                # 及时释放资源
-                del doc
-                del result
-                
-            else:
-                results["failed"] += 1
-                error_msg = f"{file_name}: {result.status}"
-                results["errors"].append(error_msg)
-                logger.error(f"✗ 转换失败: {error_msg}")
-                
-                if result.errors:
-                    for err in result.errors:
-                        logger.error(f"  错误: {err.error_message}")
+                    results["failed"] += 1
+                    error_msg = f"{file_name}: {result.status}"
+                    results["errors"].append(error_msg)
+                    logger.error(f"✗ 转换失败: {error_msg}")
+                    
+                    if result.errors:
+                        for err in result.errors:
+                            logger.error(f"  错误: {err.error_message}")
+            
+        except Exception as e:
+            logger.error(f"批量转换失败: {str(e)}")
+            raise
+        finally:
+            # 恢复原来的工作目录
+            os.chdir(original_cwd)
         
         return results
 
 
 def convert_pdf_to_markdown(
+    working_dir: str,
     pdf_file: str,
     output_file: Optional[str] = None,
     *,
@@ -378,8 +422,9 @@ def convert_pdf_to_markdown(
     注意：为了提高性能，推荐使用 DoclingConverter 类来批量处理文件
     
     Args:
-        pdf_file: PDF 文件路径（支持本地文件或 URL）
-        output_file: 输出 Markdown 文件路径，默认为同名 .md 文件
+        working_dir: 工作目录（必填），所有相对路径都基于此目录
+        pdf_file: PDF 文件路径（相对于 working_dir 的相对路径，或 URL）
+        output_file: 输出 Markdown 文件路径（相对于 working_dir 的相对路径）
         ocr_enabled: 是否启用 OCR（光学字符识别），默认 False（加快速度）
         ocr_langs: OCR 使用的语言列表，例如 ["en", "zh"]。默认为 ["en"]
         do_table_structure: 是否启用表格结构识别，默认 True
@@ -399,11 +444,12 @@ def convert_pdf_to_markdown(
         
     Example:
         >>> # 基本转换（快速）
-        >>> md_text = convert_pdf_to_markdown("input.pdf")
+        >>> md_text = convert_pdf_to_markdown(".", "input.pdf")
         >>> 
         >>> # 批量处理（推荐，性能更好）
         >>> converter = DoclingConverter()
         >>> results = converter.convert_multiple(
+        ...     working_dir=".",
         ...     file_paths=["doc1.pdf", "doc2.pdf"],
         ...     output_dir="output/"
         ... )
@@ -421,6 +467,7 @@ def convert_pdf_to_markdown(
     )
     
     return converter.convert(
+        working_dir=working_dir,
         source_file=pdf_file,
         output_file=output_file,
         debug=debug,
@@ -433,8 +480,9 @@ if __name__ == "__main__":
     import sys
     
     # 替换为你的 PDF 文件路径
-    pdf_file = "files/20210701012009-王怡入-拉格朗日中值定理在考研数学中的应用.pdf"
-    output_file = "files/20210701012009-王怡入-拉格朗日中值定理在考研数学中的应用-docling.md"
+    working_dir = "/Users/liuyuhua/PycharmProjects/DocsConvert/pdf_to_markdown/files"
+    pdf_file = "2023070101ZB203.docx"
+    output_file = "2023070101ZB203-docling.md"
     
     try:
         # 示例 3: 启用高级功能（较慢）
@@ -447,6 +495,7 @@ if __name__ == "__main__":
         print("示例 3: 启用图片（注意：公式识别已禁用以避免依赖冲突）")
         print("=" * 60)
         result3 = converter.convert(
+            working_dir=working_dir,
             source_file=pdf_file,
             output_file=output_file,
         )

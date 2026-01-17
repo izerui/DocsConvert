@@ -20,7 +20,6 @@ from . import _nougat
 # 导出主要转换函数
 from ._markitdown import convert_pdf_to_markdown as convert_with_markitdown
 from ._pymupdf4llm import convert_pdf_to_markdown as convert_with_pymupdf4llm
-from ._docling import convert_pdf_to_markdown as convert_with_docling
 from ._pdfplumber_pymupdf import convert_pdf_to_markdown as convert_with_pdfplumber
 from ._marker import convert_pdf_to_markdown as convert_with_marker
 from ._nougat import convert_pdf_to_markdown as convert_with_nougat
@@ -28,7 +27,6 @@ from ._nougat import convert_pdf_to_markdown as convert_with_nougat
 __all__ = [
     'convert_with_markitdown',
     'convert_with_pymupdf4llm',
-    'convert_with_docling',
     'convert_with_pdfplumber',
     'convert_with_marker',
     'convert_with_nougat',
